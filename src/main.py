@@ -1,11 +1,12 @@
-from textnode import TextNode, TextType
 
+
+from functions import recursive_copy
 
 
 def main():
-    node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
-    print(node)
+    recursive_copy("static", "public")
 
+#Copy all contents from a source directory to a destination directory
 
 
 
