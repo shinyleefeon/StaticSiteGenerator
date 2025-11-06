@@ -23,3 +23,22 @@ class TextNode:
 
     def __repr__(self):
         return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
+    
+
+def text_node_to_html_node(text_node):
+    from leafnode import LeafNode
+
+    if text_node.text_type == TextType.PLAIN:
+        return LeafNode(value=text_node.text)
+    elif text_node.text_type == TextType.BOLD:
+        return LeafNode(tag="strong", value=text_node.text)
+    elif text_node.text_type == TextType.ITALIC:
+        return LeafNode(tag="em", value=text_node.text)
+    elif text_node.text_type == TextType.CODE:
+        return LeafNode(tag="code", value=text_node.text)
+    elif text_node.text_type == TextType.LINK:
+        return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url} if text_node.url else {})
+    elif text_node.text_type == TextType.IMAGE:
+        return LeafNode(tag="img", props={"src": text_node.url, "alt": text_node.text} if text_node.url else {"alt": text_node.text})
+    else:
+        raise ValueError("Unsupported TextType")

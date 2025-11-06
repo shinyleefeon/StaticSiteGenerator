@@ -6,7 +6,6 @@ class HTMLNode:
     def __init__(self, tag = None, value = None, children = None, props = None):
         self.tag = tag
         self.value = value
-        # children should be assigned from the children parameter, not value
         self.children = children
         self.props = props
 
