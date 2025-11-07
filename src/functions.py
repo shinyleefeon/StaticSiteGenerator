@@ -253,7 +253,7 @@ def extract_title(markdown):
     raise ValueError("No level-1 heading found for title extraction")
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath="/"):
     #Generate an HTML page from markdown content using a template.
 
     print(f"Generating page from {from_path} to {dest_path}")
@@ -265,20 +265,21 @@ def generate_page(from_path, template_path, dest_path):
     for child in html_node.children:
         content_html += child.to_html()
     final_html = template.replace("{{ Title }}", title).replace("{{ Content }}", content_html)
+    final_html = final_html.replace("href=\"/", f"href=\"{basepath}").replace("src=\"/", f"src=\"{basepath}")
     os.makedirs(dest_path, exist_ok=True)
     output_file = os.path.join(dest_path, "index.html")
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(final_html) 
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath="/"):
     directory = os.listdir(dir_path_content)
     for item in directory:
         src_path = os.path.join(dir_path_content, item)
         if os.path.isdir(src_path):
             # If it's a directory, recurse with the same logic
             dest_path = os.path.join(dest_dir_path, item)
-            generate_pages_recursive(src_path, template_path, dest_path)
+            generate_pages_recursive(src_path, template_path, dest_path, basepath)
         elif item.endswith(".md"):
             # If it's a markdown file, generate the page
             if item == "index.md":
@@ -287,4 +288,4 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
             else:
                 # For other .md files, create a subdirectory
                 dest_path = os.path.join(dest_dir_path, item.replace(".md", ""))
-            generate_page(src_path, template_path, dest_path)
+            generate_page(src_path, template_path, dest_path, basepath)
