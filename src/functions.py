@@ -275,8 +275,16 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
     directory = os.listdir(dir_path_content)
     for item in directory:
         src_path = os.path.join(dir_path_content, item)
-        dest_path = os.path.join(dest_dir_path, item.replace(".md", ""))
         if os.path.isdir(src_path):
+            # If it's a directory, recurse with the same logic
+            dest_path = os.path.join(dest_dir_path, item)
             generate_pages_recursive(src_path, template_path, dest_path)
         elif item.endswith(".md"):
+            # If it's a markdown file, generate the page
+            if item == "index.md":
+                # Special case for index.md, output to the parent directory
+                dest_path = dest_dir_path
+            else:
+                # For other .md files, create a subdirectory
+                dest_path = os.path.join(dest_dir_path, item.replace(".md", ""))
             generate_page(src_path, template_path, dest_path)
