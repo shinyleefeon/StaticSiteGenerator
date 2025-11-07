@@ -33,7 +33,7 @@ def block_to_block_type(block_str):
         return BlockType.QUOTE
     elif block_str.startswith("- "):
         return BlockType.UNORDERDED_LIST
-    elif block_str[0:2].isdigit() and block_str[2:4] == ". ":
+    elif block_str[0].isdigit() and ". " in block_str[:4]:
         return BlockType.ORDERED_LIST
     else:
         return BlockType.PARAGRAPH

@@ -39,6 +39,6 @@ def text_node_to_html_node(text_node):
     elif text_node.text_type == TextType.LINK:
         return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url} if text_node.url else {})
     elif text_node.text_type == TextType.IMAGE:
-        return LeafNode(tag="img", props={"src": text_node.url, "alt": text_node.text} if text_node.url else {"alt": text_node.text})
+        return LeafNode(tag="img", value="", props={"src": text_node.url, "alt": text_node.text} if text_node.url else {"alt": text_node.text})
     else:
         raise ValueError("Unsupported TextType")

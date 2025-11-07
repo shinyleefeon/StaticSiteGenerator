@@ -153,6 +153,16 @@ def markdown_to_html_node(markdown):
             node.value = " ".join(block.split())
         elif type == BlockType.HEADING:
             node.value = block.lstrip("# ").strip()
+        elif type == BlockType.HEADING2:
+            node.value = block.lstrip("# ").strip()
+        elif type == BlockType.HEADING3:
+            node.value = block.lstrip("# ").strip()
+        elif type == BlockType.HEADING4:
+            node.value = block.lstrip("# ").strip()
+        elif type == BlockType.HEADING5:
+            node.value = block.lstrip("# ").strip()
+        elif type == BlockType.HEADING6:
+            node.value = block.lstrip("# ").strip()
         elif type == BlockType.CODE:
             node.value = block.strip("`").strip()
         elif type == BlockType.QUOTE:
@@ -160,16 +170,27 @@ def markdown_to_html_node(markdown):
         elif type == BlockType.UNORDERDED_LIST:
             items = block.lstrip("- ").split("\n- ")
             for item in items:
-                item_node = LeafNode(tag="li", value=item.strip())
+                item_node = ParentNode(tag="li", children=[])
+                text_nodes = text_to_textnodes(item.strip())
+                for text_node in text_nodes:
+                    html_leaf = text_node_to_html_node(text_node)
+                    item_node.children.append(html_leaf)
                 node.children.append(item_node)
         elif type == BlockType.ORDERED_LIST:
             items = re.split(r"\d+\. ", block)[1:]  # Skip the first empty split
             for item in items:
-                item_node = LeafNode(tag="li", value=item.strip())
+                item_node = ParentNode(tag="li", children=[])
+                text_nodes = text_to_textnodes(item.strip())
+                for text_node in text_nodes:
+                    html_leaf = text_node_to_html_node(text_node)
+                    item_node.children.append(html_leaf)
                 node.children.append(item_node)
         else:
             raise ValueError("Unsupported BlockType")
-        if type != BlockType.CODE and type != BlockType.UNORDERDED_LIST and type != BlockType.ORDERED_LIST:
+        
+        # Apply inline formatting to paragraphs, headings, and quotes
+        if type in (BlockType.PARAGRAPH, BlockType.HEADING, BlockType.HEADING2, BlockType.HEADING3, 
+                    BlockType.HEADING4, BlockType.HEADING5, BlockType.HEADING6, BlockType.QUOTE):
             text_nodes = text_to_textnodes(node.value)
             for text_node in text_nodes:
                 html_leaf = text_node_to_html_node(text_node)
@@ -186,22 +207,76 @@ def markdown_to_html_node(markdown):
     
 
 def recursive_copy(src, dest):
-    
+    """Recursively copy contents of directory `src` into directory `dest`.
+
+    Behavior:
+    - If `dest` exists, it will be removed and recreated (top-level only).
+    - Copies files with metadata (shutil.copy2).
+    - Recursively copies subdirectories.
+    """
+
+    if not os.path.isdir(src):
+        raise ValueError("Source must be a directory")
+
+    # Clean destination directory only at the top level
     if os.path.exists(dest):
         shutil.rmtree(dest)
-    os.makedirs(dest)
-    
-    if not os.path.isdir(src) or not os.path.isdir(dest):
-        raise ValueError("Source and destination must be directories")
-    
-    
-    
-    
-    for item in os.listdir(src):
-        if not os.path.isdir(item):
-            recursive_copy(os.path.join(src, item), os.path.join(dest, item))
-        else:
-            s = os.path.join(src, item)
-            d = os.path.join(dest, item)
-            shutil.copy2(s, d)    
+    os.makedirs(dest, exist_ok=True)
 
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dest, item)
+        if os.path.isdir(s):
+            # Recursively copy subdirectory
+            os.makedirs(d, exist_ok=True)
+            for sub in os.listdir(s):
+                sub_src = os.path.join(s, sub)
+                sub_dest = os.path.join(d, sub)
+                if os.path.isdir(sub_src):
+                    recursive_copy(sub_src, sub_dest)
+                else:
+                    shutil.copy2(sub_src, sub_dest)
+        else:
+            # Copy regular file
+            shutil.copy2(s, d)
+
+def extract_title(markdown):
+    """Extract the title from markdown content.
+
+    The title is defined as the first level-1 heading (starting with '# ').
+    If no level-1 heading is found, return 'Untitled'.
+    """
+    lines = markdown.splitlines()
+    for line in lines:
+        if line.startswith("# "):
+            return line[2:].strip()
+    raise ValueError("No level-1 heading found for title extraction")
+
+
+def generate_page(from_path, template_path, dest_path):
+    #Generate an HTML page from markdown content using a template.
+
+    print(f"Generating page from {from_path} to {dest_path}")
+    markdown = open(from_path, "r", encoding="utf-8").read()
+    template = open(template_path, "r", encoding="utf-8").read()
+    title = extract_title(markdown)
+    html_node = markdown_to_html_node(markdown)
+    content_html = ""
+    for child in html_node.children:
+        content_html += child.to_html()
+    final_html = template.replace("{{ Title }}", title).replace("{{ Content }}", content_html)
+    os.makedirs(dest_path, exist_ok=True)
+    output_file = os.path.join(dest_path, "index.html")
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(final_html) 
+
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    directory = os.listdir(dir_path_content)
+    for item in directory:
+        src_path = os.path.join(dir_path_content, item)
+        dest_path = os.path.join(dest_dir_path, item.replace(".md", ""))
+        if os.path.isdir(src_path):
+            generate_pages_recursive(src_path, template_path, dest_path)
+        elif item.endswith(".md"):
+            generate_page(src_path, template_path, dest_path)

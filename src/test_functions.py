@@ -276,7 +276,7 @@ class TestMarkdownToHTMLNodeEdgeCases(unittest.TestCase):
         html = node.to_html()
         self.assertEqual(
             html,
-            "<div><ul><li>First item</li><li>Second item with **bold**</li><li>Third item with _italic_</li></ul></div>",
+            "<div><ul><li>First item</li><li>Second item with <b>bold</b></li><li>Third item with <i>italic</i></li></ul></div>",
         )
 
     def test_ordered_list_single_item(self):
